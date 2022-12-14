@@ -11,6 +11,9 @@ RUN cargo +nightly build --release -Z sparse-registry --timings
 
 FROM alpine
 
+# DEBUG
+COPY --from=builder /app/target/cargo-timings/ /timings
+
 WORKDIR /app
 
 COPY error.html .

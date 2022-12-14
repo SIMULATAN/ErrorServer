@@ -8,7 +8,6 @@ jobs:
         uses: docker/setup-qemu-action@v2
         with:
           platforms: arm64
-          image: multiarch/qemu-user-static
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
@@ -31,26 +30,27 @@ jobs:
             event=tag,type=semver,pattern={{version}}
             event=tag,type=semver,pattern={{major}}.{{minor}}
             event=tag,type=semver,pattern={{major}}
-            type=sha
+            type=sha,
+            type=raw,value=current
 
       - name: Docker Build and push
         uses: docker/build-push-action@v3
         with:
-          platforms: linux/amd64,linux/arm64/v8
+          #platforms: linux/amd64,linux/arm64/v8
+          platform: linux/arm64/v8
           push: true
           # replace above with this: ${{ github.ref == 'refs/heads/main' }} || startsWith(github.ref, 'refs/tags/v')
           tags: ${{ steps.metadata.outputs.tags }}
           labels: ${{ steps.metadata.outputs.labels }}
 
-  build-no-docker:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-      - uses: actions-rs/toolchain@v1
+      - uses: shrink/actions-docker-extract@v2
+        id: extract
         with:
-          override: true
-          toolchain: nightly
-      - uses: actions-rs/cargo@v1
+          image: current
+          path: /timings/.
+
+      - name: Upload Dist
+        uses: actions/upload-artifact@v2
         with:
-          command: build
-          args: --release -Z sparse-registry --timings
+          path: ${{ steps.extract.outputs.destination }}
+          name: timings-report
