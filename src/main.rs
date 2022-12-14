@@ -5,8 +5,10 @@ use regex::Regex;
 use crate::http_codes::get_code;
 
 mod http_codes;
+mod signals;
 
 fn main() {
+    signals::setup();
     let listener = TcpListener::bind("0.0.0.0:7878").unwrap();
     println!("Listening on :7878");
     let regex: Regex = Regex::new(r"GET /(.*) HTTP/\d.\d").unwrap();
