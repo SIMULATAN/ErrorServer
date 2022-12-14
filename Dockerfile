@@ -14,6 +14,6 @@ FROM alpine
 WORKDIR /app
 
 COPY error.html .
-COPY --from=builder /app/target/release/ErrorServer .
+COPY --from=builder /app/target/release/error_server .
 
-ENTRYPOINT [ "/app/ErrorServer" ]
+ENTRYPOINT [ "/app/error_server" ]
