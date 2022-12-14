@@ -1,5 +1,5 @@
 [package]
-name = "ErrorServer"
+name = "error_server"
 version = "1.0.0"
 edition = "2021"
 repository = "https://github.com/SIMULATAN/ErrorServer"

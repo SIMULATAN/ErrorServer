@@ -7,7 +7,7 @@ RUN rustup toolchain install nightly
 COPY Cargo.toml Cargo.lock ./
 COPY src ./src
 
-RUN cargo +nightly build --release -Z sparse-registry
+RUN cargo +nightly build --release -Z sparse-registry --timings
 
 FROM alpine
 
