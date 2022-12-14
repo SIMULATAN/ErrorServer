@@ -1,4 +1,4 @@
-FROM rust:slim as builder
+FROM rust:alpine as builder
 
 WORKDIR /app
 
