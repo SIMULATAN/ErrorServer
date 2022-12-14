@@ -2,6 +2,8 @@ FROM rust:slim as builder
 
 WORKDIR /app
 
+RUN apt-get update && apt-get install -y gcc
+
 RUN rustup toolchain install nightly
 
 COPY Cargo.toml Cargo.lock ./
