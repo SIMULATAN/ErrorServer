@@ -32,14 +32,14 @@ jobs:
             event=tag,type=semver,pattern={{major}}.{{minor}}
             event=tag,type=semver,pattern={{major}}
             type=sha,
-            type=raw,value=ghcr.io/${{ github.repository }}:current
+            type=raw,value=current
 
       - name: Docker Build and push
         uses: docker/build-push-action@v3
         with:
           #platforms: linux/amd64,linux/arm64/v8
           builder: ${{ steps.buildx.outputs.name }}
-          platform: linux/arm64/v8
+          platforms: linux/arm64/v8
           push: true
           # replace above with this: ${{ github.ref == 'refs/heads/main' }} || startsWith(github.ref, 'refs/tags/v')
           tags: ${{ steps.metadata.outputs.tags }}
