@@ -31,7 +31,7 @@ jobs:
             event=tag,type=semver,pattern={{major}}.{{minor}}
             event=tag,type=semver,pattern={{major}}
             type=sha,
-            type=raw,value=current
+            type=raw,value=ghcr.io/${{ github.repository }}:current
 
       - name: Docker Build and push
         uses: docker/build-push-action@v3
@@ -46,7 +46,7 @@ jobs:
       - uses: shrink/actions-docker-extract@v2
         id: extract
         with:
-          image: current
+          image: ghcr.io/${{ github.repository }}:current
           path: /timings/.
 
       - name: Upload Dist
