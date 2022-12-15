@@ -10,6 +10,7 @@ jobs:
           platforms: arm64
 
       - name: Set up Docker Buildx
+        id: buildx
         uses: docker/setup-buildx-action@v2
 
       - name: Login to Docker Hub
@@ -37,6 +38,7 @@ jobs:
         uses: docker/build-push-action@v3
         with:
           #platforms: linux/amd64,linux/arm64/v8
+          builder: ${{ steps.buildx.outputs.name }}
           platform: linux/arm64/v8
           push: true
           # replace above with this: ${{ github.ref == 'refs/heads/main' }} || startsWith(github.ref, 'refs/tags/v')
