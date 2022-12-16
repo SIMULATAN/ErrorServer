@@ -32,7 +32,7 @@ fn handle_connection(mut stream: TcpStream, file_contents: &String, regex: &Rege
         .collect();
 
     let request_line = http_request.get(0).unwrap();
-    let status_code = regex.captures_iter(&request_line).next().unwrap().get(1).unwrap().as_str().parse::<u16>().unwrap_or(1);
+    let status_code = regex.captures_iter(&request_line).next().unwrap().get(1).unwrap().as_str().parse::<u16>().unwrap_or(404);
 
     let status_code_str = if status_code == 1 {"".to_string()} else {status_code.to_string()};
     let content = file_contents
