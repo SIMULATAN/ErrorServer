@@ -3,20 +3,20 @@
 version = 3
 
 [[package]]
-name = "ErrorServer"
-version = "1.0.0"
-dependencies = [
- "regex",
- "signal-hook",
-]
-
-[[package]]
 name = "aho-corasick"
 version = "0.7.20"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "cc936419f96fa211c1b9166887b38e5e40b19958e5b895be7c1f93adec7071ac"
 dependencies = [
  "memchr",
+]
+
+[[package]]
+name = "error_server"
+version = "1.1.0"
+dependencies = [
+ "regex",
+ "signal-hook",
 ]
 
 [[package]]
