@@ -16,7 +16,7 @@ case $TARGETPLATFORM in
 	linux/amd64)
 		cargo +nightly build --release -Z sparse-registry
 		;;
-	linux/arm64/v8)
+	linux/arm64)
 		cross +nightly build --release -Z sparse-registry --target aarch64-unknown-linux-musl
 		cp target/{${{ matrix.architecture }}/,}release/error_server
 		;;
