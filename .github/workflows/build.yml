@@ -2,6 +2,7 @@ on: push
 
 jobs:
   build:
+    name: Build with rust
     strategy:
       fail-fast: false
       matrix:
@@ -44,8 +45,9 @@ jobs:
 
 
   push:
+    name: Build and push Docker image
     needs: build
-    runs-on: ubuntu
+    runs-on: ubuntu-latest
     steps:
       - name: Set up Docker Buildx
         id: buildx
