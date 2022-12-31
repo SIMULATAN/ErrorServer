@@ -53,7 +53,7 @@ jobs:
           tool: cross
 
       - name: Rust build
-        run: cargo +nightly build --release -Z sparse-registry --target ${{ matrix.architecture }}
+        run: cargo +nightly build --release -Z sparse-registry $(${{ matrix.use-cross}} && echo "--target ${{ matrix.architecture }}")
 
       - name: Docker Build and push
         uses: docker/build-push-action@v3
