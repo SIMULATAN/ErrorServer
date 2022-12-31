@@ -6,7 +6,7 @@ ENV CROSS_CONTAINER_IN_CONTAINER=true
 ARG TARGETPLATFORM
 
 RUN rustup toolchain install nightly
-RUN [ "$TARGETPLATFORM" == "linux/arm64" ] && (echo "Installing cross..." && apk add alpine-sdk && cargo install cross) || echo "Skipping the installation of cross!"
+RUN [ "$TARGETPLATFORM" == "linux/arm64" ] && (echo "Installing cross..." && cargo install cargo-binstall && cargo binstall cross) || echo "Skipping the installation of cross!"
 
 COPY Cargo.toml Cargo.lock ./
 COPY src ./src
