@@ -45,6 +45,7 @@ jobs:
 
   push:
     depends-on: build
+    runs-on: ubuntu
     steps:
       - name: Set up Docker Buildx
         id: buildx
