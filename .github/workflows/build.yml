@@ -53,7 +53,8 @@ jobs:
           tool: cross
 
       - name: Rust build
-        run: ${{ matrix.use-cross }} \
+        run: |
+          ${{ matrix.use-cross }} \
           && (echo "Running cross." && cross +nightly build --release -Z sparse-registry --target ${{ matrix.architecture }}) \
           || (echo "Running without cross." && cargo +nightly build --release -Z sparse-registry)
 
