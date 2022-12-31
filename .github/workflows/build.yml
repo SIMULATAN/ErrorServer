@@ -2,7 +2,7 @@ on: push
 
 jobs:
   build:
-    matrix:
+    build-matrix:
       strategy:
         matrix:
           architecture: [amd64-unknown-linux-gnu, aarch64-unknown-linux-gnu]
