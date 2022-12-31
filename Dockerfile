@@ -9,6 +9,6 @@ RUN if [ "$TARGETPLATFORM" == "linux/arm64" ]; \
 		fi
 
 COPY error.html .
-COPY $FOLDER/error_server .
+COPY ${FOLDER}/error_server .
 
 ENTRYPOINT [ "/app/error_server" ]
