@@ -6,9 +6,9 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - architecture: amd64-unknown-linux-gnu
-            platform: linux/amd64
-            use-cross: false
+          #- architecture: amd64-unknown-linux-gnu
+          #  platform: linux/amd64
+          #  use-cross: false
           - architecture: aarch64-unknown-linux-gnu
             platform: linux/arm64/v8
             use-cross: true
