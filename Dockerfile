@@ -20,6 +20,9 @@ case $TARGETPLATFORM in
 		cross +nightly build --release -Z sparse-registry --target aarch64-unknown-linux-musl
 		cp target/{${{ matrix.architecture }}/,}release/error_server
 		;;
+	*)
+		echo "Unknown target platform '$TARGETPLATFORM'!"
+		exit 1
 esac
 EOF
 
