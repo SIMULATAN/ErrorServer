@@ -52,9 +52,10 @@ jobs:
         with:
           tool: cross
 
+      # don't add spaces before the backslash or cross won't work properly
       - name: Rust build
-        run: ${{ matrix.use-cross }} \
-          && cross +nightly build --release -Z sparse-registry --target ${{ matrix.architecture }} \
+        run: ${{ matrix.use-cross }}\
+          && cross +nightly build --release -Z sparse-registry --target ${{ matrix.architecture }}\
           || cargo +nightly build --release -Z sparse-registry
 
       - run: tree
