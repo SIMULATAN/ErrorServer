@@ -55,7 +55,7 @@ jobs:
       - name: Rust build
         run: |
           ${{ matrix.use-cross }} \
-          && (echo "Running cross." && cross +nightly build --release -Z sparse-registry --target ${{ matrix.architecture }}) \
+          && (echo "Running cross." && cross +nightly build --release -Z sparse-registry --target ${{ matrix.architecture }} && cp target/{aarch64-unknown-linux-gnu/,}release/error_server) \
           || (echo "Running without cross." && cargo +nightly build --release -Z sparse-registry)
 
       - run: tree
