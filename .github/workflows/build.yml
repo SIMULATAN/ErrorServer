@@ -6,10 +6,10 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          #- architecture: amd64-unknown-linux-gnu
-          #  platform: linux/amd64
-          #  use-cross: false
-          - architecture: aarch64-unknown-linux-gnu
+          - architecture: amd64-unknown-linux-musl
+            platform: linux/amd64
+            use-cross: false
+          - architecture: aarch64-unknown-linux-musl
             platform: linux/arm64/v8
             use-cross: true
     runs-on: ubuntu-latest
@@ -55,10 +55,8 @@ jobs:
       - name: Rust build
         run: |
           ${{ matrix.use-cross }} \
-          && (echo "Running cross." && cross +nightly build --release -Z sparse-registry --target ${{ matrix.architecture }} && cp target/{aarch64-unknown-linux-gnu/,}release/error_server) \
+          && (echo "Running cross." && cross +nightly build --release -Z sparse-registry --target ${{ matrix.architecture }} && cp target/{${{ matrix.architecture }}/,}release/error_server) \
           || (echo "Running without cross." && cargo +nightly build --release -Z sparse-registry)
-
-      - run: tree
 
       - name: Docker Build and push
         uses: docker/build-push-action@v3
