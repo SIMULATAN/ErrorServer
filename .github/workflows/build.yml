@@ -2,16 +2,6 @@ on: push
 
 jobs:
   build:
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - architecture: amd64-unknown-linux-musl
-            platform: linux/amd64
-            use-cross: false
-          - architecture: aarch64-unknown-linux-musl
-            platform: linux/arm64/v8
-            use-cross: true
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -41,29 +31,12 @@ jobs:
             event=tag,type=semver,pattern={{major}}
             type=sha
 
-      - name: Setup rust
-        uses: dtolnay/rust-toolchain@stable
-        with:
-          toolchain: nightly
-
-      - name: Install cross
-        if: matrix.use-cross
-        uses: taiki-e/install-action@v2
-        with:
-          tool: cross
-
-      - name: Rust build
-        run: |
-          ${{ matrix.use-cross }} \
-          && (echo "Running cross." && cross +nightly build --release -Z sparse-registry --target ${{ matrix.architecture }} && cp target/{${{ matrix.architecture }}/,}release/error_server) \
-          || (echo "Running without cross." && cargo +nightly build --release -Z sparse-registry)
-
       - name: Docker Build and push
         uses: docker/build-push-action@v3
         with:
           push: true
           context: .
-          platforms: ${{ matrix.platform }}
+          platforms: linux/amd64,linux/arm64/v8
           builder: ${{ steps.buildx.outputs.name }}
           tags: ${{ steps.metadata.outputs.tags }}
           labels: ${{ steps.metadata.outputs.labels }}
