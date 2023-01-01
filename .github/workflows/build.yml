@@ -23,7 +23,8 @@ jobs:
         with:
           toolchain: nightly
 
-      - uses: Swatinem/rust-cache@v2
+      - name: Handle Cache
+        uses: swatinem/rust-cache@v2
         with:
           key: ${{ matrix.architecture }}
 
@@ -35,14 +36,14 @@ jobs:
       - name: Rust build
         run: |
           cross +nightly build --release -Z sparse-registry --target ${{ matrix.architecture }}
-          cp target/{${{ matrix.architecture }}/,}release/error_server
+          cp target/${{ matrix.architecture }}/release/error_server .
 
       - name: Upload
         uses: actions/upload-artifact@v3
         with:
           name: ${{ matrix.artifact-name }}
           path: |
-            target/release/error_server
+            error_server
             error.html
 
 
