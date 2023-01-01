@@ -1,0 +1,106 @@
+on: push
+
+jobs:
+  build:
+    name: Build with rust
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - architecture: x86_64-unknown-linux-musl
+            platform: linux/amd64
+            artifact-name: amd64
+          - architecture: aarch64-unknown-linux-musl
+            platform: linux/arm64/v8
+            artifact-name: arm64
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Setup rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: nightly
+
+      - name: Handle Cache
+        uses: swatinem/rust-cache@v2
+        with:
+          key: ${{ matrix.architecture }}
+
+      - name: Install cross
+        uses: taiki-e/install-action@v2
+        with:
+          tool: cross
+
+      - name: Rust build
+        run: |
+          cross +nightly build --release -Z sparse-registry --target ${{ matrix.architecture }}
+          cp target/${{ matrix.architecture }}/release/error_server .
+
+      - name: Upload
+        uses: actions/upload-artifact@v3
+        with:
+          name: ${{ matrix.artifact-name }}
+          path: |
+            error_server
+            error.html
+
+
+  push:
+    name: Build and push Docker image
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      # we only need the Dockerfile and therefore we'll also only checkout that single file
+      - name: Checkout
+        uses: bhacaz/checkout-files@v2
+        with:
+          files: Dockerfile
+          branch: ${{ github.head_ref || github.ref_name }}
+
+      - name: Set up Docker Buildx
+        id: buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Docker metadata
+        id: metadata
+        uses: docker/metadata-action@v4
+        with:
+          images: ghcr.io/${{ github.repository }}
+          tags: |
+            type=ref,event=branch
+            type=ref,event=pr
+            event=tag,type=semver,pattern={{version}}
+            event=tag,type=semver,pattern={{major}}.{{minor}}
+            event=tag,type=semver,pattern={{major}}
+            type=sha
+
+      - name: Download AMD Build
+        uses: actions/download-artifact@v3
+        with:
+          name: amd64
+          path: linux/amd64
+
+      - name: Download ARM Build
+        uses: actions/download-artifact@v3
+        with:
+          name: arm64
+          path: linux/arm64
+
+      - name: Docker Build and push
+        uses: docker/build-push-action@v3
+        with:
+          push: true
+          context: .
+          platforms: linux/amd64,linux/arm64/v8
+          builder: ${{ steps.buildx.outputs.name }}
+          tags: ${{ steps.metadata.outputs.tags }}
+          labels: ${{ steps.metadata.outputs.labels }}

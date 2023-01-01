@@ -9,3 +9,9 @@ repository = "https://github.com/SIMULATAN/ErrorServer"
 [dependencies]
 regex = "1.7.0"
 signal-hook = "0.3.14"
+
+[profile.release]
+opt-level = 3
+panic = "abort"
+lto = true
+strip = "symbols"
