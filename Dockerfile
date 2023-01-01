@@ -1,4 +1,3 @@
-# syntax=docker/dockerfile:latest
 FROM alpine
 
 WORKDIR /app
