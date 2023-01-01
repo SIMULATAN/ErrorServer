@@ -23,6 +23,10 @@ jobs:
         with:
           toolchain: nightly
 
+      - uses: Swatinem/rust-cache@v2
+        with:
+          key: ${{ matrix.architecture }}
+
       - name: Install cross
         uses: taiki-e/install-action@v2
         with:
@@ -37,7 +41,7 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: ${{ matrix.artifact-name }}
-          path:
+          path: |
             target/release/error_server
             error.html
 
