@@ -5,7 +5,7 @@ WORKDIR /app
 
 ARG TARGETPLATFORM
 
-COPY error.html .
+COPY $TARGETPLATFORM/error.html .
 COPY $TARGETPLATFORM/error_server .
 
 ENTRYPOINT [ "/app/error_server" ]

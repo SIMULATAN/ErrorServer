@@ -9,11 +9,9 @@ jobs:
         include:
           - architecture: amd64-unknown-linux-musl
             platform: linux/amd64
-            use-cross: false
             artifact-name: amd64
           - architecture: aarch64-unknown-linux-musl
             platform: linux/arm64/v8
-            use-cross: true
             artifact-name: arm64
     runs-on: ubuntu-latest
     steps:
@@ -26,22 +24,22 @@ jobs:
           toolchain: nightly
 
       - name: Install cross
-        if: matrix.use-cross
         uses: taiki-e/install-action@v2
         with:
           tool: cross
 
       - name: Rust build
         run: |
-          ${{ matrix.use-cross }} \
-          && (echo "Running cross." && cross +nightly build --release -Z sparse-registry --target ${{ matrix.architecture }} && cp target/{${{ matrix.architecture }}/,}release/error_server) \
-          || (echo "Running without cross." && cargo +nightly build --release -Z sparse-registry)
+          cross +nightly build --release -Z sparse-registry --target ${{ matrix.architecture }}
+          cp target/{${{ matrix.architecture }}/,}release/error_server
 
       - name: Upload
         uses: actions/upload-artifact@v3
         with:
           name: ${{ matrix.artifact-name }}
-          path: target/release/error_server
+          path:
+            target/release/error_server
+            error.html
 
 
   push:
@@ -53,7 +51,7 @@ jobs:
       - name: Checkout
         uses: bhacaz/checkout-files@v2
         with:
-          files: Dockerfile error.html
+          files: Dockerfile
           branch: ${{ github.head_ref || github.ref_name }}
 
       - name: Set up Docker Buildx
