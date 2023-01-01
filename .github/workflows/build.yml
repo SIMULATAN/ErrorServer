@@ -49,6 +49,12 @@ jobs:
     needs: build
     runs-on: ubuntu-latest
     steps:
+      # we only need the Dockerfile and therefore we'll also only checkout that single file
+      - name: Checkout
+        uses: bhacaz/checkout-files@v2
+        with:
+         files: Dockerfile
+
       - name: Set up Docker Buildx
         id: buildx
         uses: docker/setup-buildx-action@v2
