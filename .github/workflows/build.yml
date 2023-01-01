@@ -53,7 +53,8 @@ jobs:
       - name: Checkout
         uses: bhacaz/checkout-files@v2
         with:
-         files: Dockerfile
+          files: Dockerfile
+          branch: ${{ github.head_ref || github.ref_name }}
 
       - name: Set up Docker Buildx
         id: buildx
