@@ -7,7 +7,7 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - architecture: amd64-unknown-linux-musl
+          - architecture: x86_64-unknown-linux-musl
             platform: linux/amd64
             artifact-name: amd64
           - architecture: aarch64-unknown-linux-musl
