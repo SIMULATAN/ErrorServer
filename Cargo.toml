@@ -1,13 +1,10 @@
 [package]
 name = "error_server"
-version = "1.1.0"
+version = "2.0.0"
 edition = "2021"
 repository = "https://github.com/SIMULATAN/ErrorServer"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
 [dependencies]
-regex = "1.7.0"
 signal-hook = "0.3.14"
 
 [profile.release]
