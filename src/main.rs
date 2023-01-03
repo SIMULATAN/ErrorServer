@@ -1,25 +1,31 @@
 use std::{fs, io::{BufReader, prelude::*}, net::{TcpListener, TcpStream}};
 
 use crate::http_codes::get_code;
+use threads::ThreadPool;
 
 mod http_codes;
 mod signals;
+mod threads;
 
 fn main() {
     signals::setup();
     let listener = TcpListener::bind("0.0.0.0:7878").unwrap();
     println!("Listening on :7878");
     let file_contents: String = fs::read_to_string("error.html").unwrap();
+    let file_contents_working: &'static str = Box::leak(file_contents.into_boxed_str());
+
+    let pool = ThreadPool::build(10).unwrap();
 
     for stream in listener.incoming() {
-        let stream = stream.unwrap();
-
-        let _ = std::panic::catch_unwind(|| handle_connection(stream, &file_contents));
+        pool.execute(|| {
+            // ignore unwrapping errors
+            let _ = handle_connection(stream.unwrap(), file_contents_working);
+        });
     }
 }
 
 // path: /{code}.html
-fn handle_connection(mut stream: TcpStream, file_contents: &String) {
+fn handle_connection(mut stream: TcpStream, file_contents: &str) -> Result<(), std::io::Error> {
     let buf_reader = BufReader::new(&mut stream);
 
     let http_request: Vec<_> = buf_reader
@@ -44,7 +50,7 @@ fn handle_connection(mut stream: TcpStream, file_contents: &String) {
 
     let response = format!("HTTP/1.1 {status_code} {}\r\nContent-Type: text/html\r\nContent-Length: {length}\r\n\r\n{content}", status_code_message.unwrap_or("NOT FOUND"));
 
-    stream.write_all(response.as_bytes()).unwrap();
+    stream.write_all(response.as_bytes())
 }
 
 fn parse_request_line(request_line: &str) -> (Option<String>, Option<String>) {
