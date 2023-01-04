@@ -1,4 +1,6 @@
-FROM alpine
+ARG BASE_IMAGE="alpine"
+
+FROM ${BASE_IMAGE}
 
 WORKDIR /app
 

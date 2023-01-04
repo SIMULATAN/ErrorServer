@@ -57,6 +57,16 @@ jobs:
     name: Build and push Docker image
     needs: build
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+          include:
+            - base-image: alpine
+              artifact-suffix: musl
+              tag-suffix: alpine
+            - base-image: debian:stable-slim
+              artifact-suffix: gnu
+              tag-suffix: debian
     steps:
       # we only need the Dockerfile and therefore we'll also only checkout that single file
       - name: Checkout
@@ -81,6 +91,8 @@ jobs:
         uses: docker/metadata-action@v4
         with:
           images: ghcr.io/${{ github.repository }}
+          flavor: |
+            suffix=${{ matrix.tag-suffix }}
           tags: |
             type=ref,event=branch
             type=ref,event=pr
@@ -92,13 +104,13 @@ jobs:
       - name: Download AMD Build
         uses: actions/download-artifact@v3
         with:
-          name: amd64-musl
+          name: amd64-${{ matrix.artifact-suffix }}
           path: linux/amd64
 
       - name: Download ARM Build
         uses: actions/download-artifact@v3
         with:
-          name: arm64-musl
+          name: arm64-${{ matrix.artifact-suffix }}
           path: linux/arm64
 
       - name: Docker Build and push
@@ -106,6 +118,8 @@ jobs:
         with:
           push: true
           context: .
+          build-args: |
+            BASE_IMAGE=${{ matrix.base-image }}
           platforms: linux/amd64,linux/arm64/v8
           builder: ${{ steps.buildx.outputs.name }}
           tags: ${{ steps.metadata.outputs.tags }}
