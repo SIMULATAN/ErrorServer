@@ -24,7 +24,10 @@ fn main() {
     for stream in listener.incoming() {
         pool_arc.execute(|timing| {
             // ignore unwrapping errors
-            let _ = handle_connection(stream.unwrap(), file_contents_working, timing);
+            let result = handle_connection(stream.unwrap(), file_contents_working, timing);
+            if result.is_err() {
+                println!("Error: {:?}", result);
+            }
         });
     }
 }
@@ -32,20 +35,31 @@ fn main() {
 // path: /{code}.html
 fn handle_connection(mut stream: TcpStream, file_contents: &str, timing: &mut Timing) -> Result<(), std::io::Error> {
     timing.start();
-    let buf_reader = BufReader::new(&mut stream);
-
-    let http_request: Vec<_> = buf_reader
-        .lines()
-        .map(|result| result.unwrap())
-        .take_while(|line| !line.is_empty())
-        .collect();
+    let mut received: Vec<u8> = vec![];
+    loop {
+        let buf = &mut [0; 4096];
+        match stream.read(buf) {
+            Ok(0) => break,
+            Ok(n) => {
+                received.extend_from_slice(&buf[..n]);
+                if n < buf.len() && buf[n] == 0 {
+                    break;
+                }
+            },
+            Err(e) => eprintln!("{e}"),
+        };
+    }
     timing.end(0);
 
-    let empty_string = String::from("");
-
     timing.start();
-    let request_line = http_request.get(0).unwrap_or(&empty_string);
-    let (method, path) = parse_request_line(request_line);
+    // read until the first newline into a string
+    let mut line = String::new();
+    received.windows(2).position(|window| window == vec!(0x0, 0xA, 0x0, 0xD, 0x0, 0xA, 0x0, 0xD)).map(|pos| {
+        line = String::from_utf8_lossy(&received[..pos]).to_string();
+    });
+    let request_line = line.trim();
+
+    let (_method, path) = parse_request_line(request_line);
     timing.end(1);
 
     timing.start();
@@ -54,19 +68,26 @@ fn handle_connection(mut stream: TcpStream, file_contents: &str, timing: &mut Ti
     timing.end(2);
 
     timing.start();
-    let content = file_contents
+    let mut content = file_contents
         .replace("{error}", &status_code.to_string())
-        .replace("{message}", status_code_message.unwrap_or("Unknown error occurred"))
-        .replace("{debug}", &*(http_request.join("\r\n") + "\r\n-- Method: " + &*method.unwrap_or_else(|| "GET".to_string())));
-    let length = content.len();
+        .replace("{message}", status_code_message.unwrap_or("Unknown error occurred"));
     timing.end(3);
 
     timing.start();
-    let response = format!("HTTP/1.1 {status_code} {}\r\nContent-Type: text/html\r\nContent-Length: {length}\r\n\r\n{content}", status_code_message.unwrap_or("NOT FOUND"));
+    let mut result;
+    unsafe {
+        result = content.as_mut_vec();
+        let bytes_of_placeholder = b"{debug}";
+        // substitute in the debug placeholder with "received"
+        let placeholder_index = result.windows(bytes_of_placeholder.len()).position(|window| window == bytes_of_placeholder).unwrap();
+        result.splice(placeholder_index..placeholder_index + bytes_of_placeholder.len(), received.into_iter());
+    }
+    let length = result.len();
+    let response = format!("HTTP/1.1 {status_code} {}\r\nContent-Type: text/html\r\nContent-Length: {length}\r\n\r\n", status_code_message.unwrap_or("NOT FOUND"));
     timing.end(4);
 
     timing.start();
-    let result = stream.write_all(response.as_bytes());
+    let result = stream.write_all(&*[response.as_bytes(), result.as_slice()].concat());
     timing.end(5);
     result
 }
