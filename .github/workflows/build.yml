@@ -92,7 +92,7 @@ jobs:
       - name: Download AMD Build
         uses: actions/download-artifact@v3
         with:
-          name: amd64
+          name: amd64-musl
           path: linux/amd64
 
       - name: Download ARM Build
