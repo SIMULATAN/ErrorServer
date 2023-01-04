@@ -1,55 +1,69 @@
-use std::{fs, io::{BufReader, prelude::*}, net::{TcpListener, TcpStream}};
+use std::{env, fs};
+use std::future::Future;
+use std::pin::Pin;
 
-use crate::http_codes::get_code;
+use http_body_util::Full;
+use hyper::{Request, Response};
+use hyper::body::{Bytes, Incoming};
+use hyper::server::conn::http1;
+use hyper::service::Service;
+use tokio::net::TcpListener;
 
 mod http_codes;
-mod signals;
 
-fn main() {
-    signals::setup();
-    let listener = TcpListener::bind("0.0.0.0:7878").unwrap();
-    println!("Listening on :7878");
-    let file_contents: String = fs::read_to_string("error.html").unwrap();
+#[tokio::main]
+async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+    let listen_addr = env::var("LISTEN_ADDR").ok().unwrap_or_else(|| String::from("0.0.0.0"));
+    let port = env::var("PORT")
+        .ok()
+        .and_then(|p| p.parse::<u16>().ok())
+        .unwrap_or_else(|| 7878);
 
-    for stream in listener.incoming() {
-        let stream = stream.unwrap();
+    println!("Trying to bind to {listen_addr}:{port}...");
+    let listener = TcpListener::bind(format!("{listen_addr}:{port}")).await?;
+    println!("Listening on {listen_addr}:{port}");
 
-        let _ = std::panic::catch_unwind(|| handle_connection(stream, &file_contents));
+    let errorpage_template: &'static str = Box::leak(fs::read_to_string("error.html").unwrap().into_boxed_str());
+
+    loop {
+        let (stream, _) = listener.accept().await?;
+
+        tokio::task::spawn(async move {
+            http1::Builder::new()
+                .serve_connection(stream, Svc { errorpage_template })
+                .await
+        });
     }
 }
 
-// path: /{code}.html
-fn handle_connection(mut stream: TcpStream, file_contents: &String) {
-    let buf_reader = BufReader::new(&mut stream);
-
-    let http_request: Vec<_> = buf_reader
-        .lines()
-        .map(|result| result.unwrap())
-        .take_while(|line| !line.is_empty())
-        .collect();
-
-    let empty_string = String::from("");
-
-    let request_line = http_request.get(0).unwrap_or(&empty_string);
-    let (method, path) = parse_request_line(request_line);
-
-    let status_code = path.map(|p| p.parse::<u16>().unwrap_or(404)).unwrap_or(404);
-    let status_code_message = get_code(status_code);
-
-    let content = file_contents
-        .replace("{error}", &status_code.to_string())
-        .replace("{message}", status_code_message.unwrap_or("Unknown error occurred"))
-        .replace("{debug}", &*(http_request.join("\r\n") + "\r\n-- Method: " + &*method.unwrap_or_else(|| "GET".to_string())));
-    let length = content.len();
-
-    let response = format!("HTTP/1.1 {status_code} {}\r\nContent-Type: text/html\r\nContent-Length: {length}\r\n\r\n{content}", status_code_message.unwrap_or("NOT FOUND"));
-
-    stream.write_all(response.as_bytes()).unwrap();
+struct Svc {
+    errorpage_template: &'static str,
 }
 
-fn parse_request_line(request_line: &str) -> (Option<String>, Option<String>) {
-    let mut parts = request_line.split_whitespace();
-    let method = parts.next().map(|x| x.to_string());
-    let path = parts.next().map(|x| x.replace("/", ""));
-    (method, path)
+impl Service<Request<Incoming>> for Svc {
+    type Response = Response<Full<Bytes>>;
+    type Error = hyper::Error;
+    type Future = Pin<Box<dyn Future<Output = Result<Self::Response, Self::Error>> + Send>>;
+
+    fn call(&mut self, request: Request<Incoming>) -> Self::Future {
+        let mut status_code = request.uri().path().replace("/", "").parse::<u16>().unwrap_or(404);
+        if status_code < 100 || status_code > 999 {
+            status_code = 404;
+        }
+
+        let response = Ok(Response::builder()
+            .status(status_code)
+            .body(Full::new(Bytes::from(self.errorpage_template
+                .replace("{error}", status_code.to_string().as_str())
+                .replace("{message}", http_codes::get_code(status_code).unwrap_or("Unknown error occurred"))
+                .replace("{debug}", request.headers()
+                    .iter()
+                    .map(|(k, v)| format!("{}: {}\r\n", k, v.to_str().unwrap()))
+                    .collect::<String>()
+                    .as_str()))
+            ))
+            .unwrap()
+        );
+        Box::pin(async { response })
+    }
 }
