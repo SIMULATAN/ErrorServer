@@ -9,10 +9,16 @@ jobs:
         include:
           - architecture: x86_64-unknown-linux-musl
             platform: linux/amd64
-            artifact-name: amd64
+            artifact-name: amd64-musl
+          - architecture: x86_64-unknown-linux-gnu
+            platform: linux/amd64
+            artifact-name: amd64-gnu
           - architecture: aarch64-unknown-linux-musl
             platform: linux/arm64/v8
-            artifact-name: arm64
+            artifact-name: arm64-musl
+          - architecture: aarch64-unknown-linux-gnu
+            platform: linux/arm64/v8
+            artifact-name: arm64-gnu
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -92,7 +98,7 @@ jobs:
       - name: Download ARM Build
         uses: actions/download-artifact@v3
         with:
-          name: arm64
+          name: arm64-musl
           path: linux/arm64
 
       - name: Docker Build and push
