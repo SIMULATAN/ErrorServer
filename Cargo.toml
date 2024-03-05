@@ -1,18 +1,23 @@
 [package]
 name = "error_server"
 description = "🚀 a simple HTTP server that returns error codes with their respective messages and debug information"
-version = "3.0.0"
+version = "3.1.0"
 edition = "2021"
 repository = "https://github.com/SIMULATAN/ErrorServer"
 license = "MIT"
 
 [dependencies]
-hyper = { version = "1.0.0-rc.2", features = ["http1", "server"], default-features = false }
+hyper = { version = "1.2.0", features = ["http1", "server"], default-features = false }
 tokio = { version = "1", features = ["rt-multi-thread", "net", "macros"], default-features = false }
-http-body-util = "0.1.0-rc.2"
+http-body-util = "0.1"
+hyper-util = { version = "0.1", features = ["tokio"], default-features = false }
 
 [profile.release]
 opt-level = 3
 panic = "abort"
 lto = true
+strip = "symbols"
+
+[profile.release.package."*"]
+opt-level = 3
 strip = "symbols"

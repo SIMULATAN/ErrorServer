@@ -3,6 +3,7 @@ use std::future::Future;
 use std::pin::Pin;
 
 use http_body_util::Full;
+use hyper_util::rt::TokioIo;
 use hyper::{Request, Response};
 use hyper::body::{Bytes, Incoming};
 use hyper::server::conn::http1;
@@ -28,9 +29,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     loop {
         let (stream, _) = listener.accept().await?;
 
+        let io = TokioIo::new(stream);
+
         tokio::task::spawn(async move {
             http1::Builder::new()
-                .serve_connection(stream, Svc { errorpage_template })
+                .serve_connection(io, Svc { errorpage_template })
                 .await
         });
     }
@@ -45,7 +48,7 @@ impl Service<Request<Incoming>> for Svc {
     type Error = hyper::Error;
     type Future = Pin<Box<dyn Future<Output = Result<Self::Response, Self::Error>> + Send>>;
 
-    fn call(&mut self, request: Request<Incoming>) -> Self::Future {
+    fn call(&self, request: Request<Incoming>) -> Self::Future {
         let mut status_code = request.uri().path().replace("/", "").parse::<u16>().unwrap_or(404);
         if status_code < 100 || status_code > 999 {
             status_code = 404;
